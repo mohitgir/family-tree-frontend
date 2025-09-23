@@ -1,25 +1,62 @@
+import axios from "axios";
 import React, { useState } from "react";
 
 const AddMember = () => {
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    gender: "male",
+    firstName: "",
+    lastName: "",
+    gender: "",
+    dob: "",
+    dod: "",
+    photo: null,
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, files } = e.target;
+    if (name === "photo") {
+      setFormData({ ...formData, photo: files[0] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
-    // TODO: send to backend API
+
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value) data.append(key, value);
+    });
+
+    try {
+      const res = await axios.post(
+        process.env.REACT_APP_API_URL + "/api/member/add",
+        data,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      console.log(res.data);
+
+      if (res.data && res.data.success) {
+        alert("Member created.");
+        setFormData({
+          firstName: "",
+          lastName: "",
+          gender: "",
+          dob: "",
+          dod: "",
+          photo: null,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
+
   return (
     <div className="">
-      {/* <h1>Add Member Form</h1> */}
-
       <div className="d-flex justify-content-center align-items-center min-vh-100 bg-dark">
         <div
           className="card bg-secondary text-white shadow-lg p-4"
@@ -73,6 +110,51 @@ const AddMember = () => {
                 <option value="female">♀ Female</option>
                 <option value="other">⚧ Other</option>
               </select>
+            </div>
+
+            {/* Date of Birth */}
+            <div className="mb-3">
+              <label htmlFor="dob" className="form-label fw-bold">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                className="form-control bg-dark text-white border-0 border-bottom"
+                id="dob"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Date of Death */}
+            <div className="mb-3">
+              <label htmlFor="dod" className="form-label fw-bold">
+                Date of Death
+              </label>
+              <input
+                type="date"
+                className="form-control bg-dark text-white border-0 border-bottom"
+                id="dod"
+                name="dod"
+                value={formData.dod}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Photo */}
+            <div className="mb-3">
+              <label htmlFor="photo" className="form-label fw-bold">
+                Photo
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                className="form-control bg-dark text-white border-0 border-bottom"
+                id="photo"
+                name="photo"
+                onChange={handleChange}
+              />
             </div>
 
             {/* Buttons */}
