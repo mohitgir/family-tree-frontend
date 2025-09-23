@@ -1,15 +1,34 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import reportWebVitals from "./reportWebVitals";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Layout from "./components/Layout";
+import FamilyTree from "./components/FamilyTree";
+import Footer from "./components/Footer";
+import Home from "./components/Home";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./index.css";
+import AddMember from "./components/AddMember";
+import AddRelations from "./components/AddRelations";
+import FindYourFamily from "./components/FindYourFamily";
+
 
 // import dotenv from 'dotenv';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="/addmember" element={<AddMember />} />
+          <Route path="/addrelations" element={<AddRelations />} />
+          <Route path="/findyourfamily" element={<FindYourFamily />} />
+        </Route>
+      </Routes>
+      {/* <Footer /> */}
+    </BrowserRouter>
   </>
 );
 
