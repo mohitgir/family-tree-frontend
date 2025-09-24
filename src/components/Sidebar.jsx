@@ -21,6 +21,11 @@ const Sidebar = () => {
           </a>
         </li>
         <li className="nav-item mb-2">
+          <a href="/relations" className="text-white btn w-100 btn-dark">
+            Relations
+          </a>
+        </li>
+        <li className="nav-item mb-2">
           <a href="/addrelations" className="text-white btn w-100 btn-dark">
             Add Relation
           </a>

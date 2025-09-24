@@ -10,6 +10,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import Members from "./components/Members";
 import AddMember from "./components/AddMember";
+import Relations from "./components/Relations";
 import AddRelations from "./components/AddRelations";
 import FindYourFamily from "./components/FindYourFamily";
 
@@ -26,6 +27,7 @@ root.render(
           <Route path="/addmember" element={<AddMember />} />
           <Route path="/members" element={<Members />} />
           <Route path="/addrelations" element={<AddRelations />} />
+          <Route path="/relations" element={<Relations />} />
           <Route path="/findyourfamily" element={<FindYourFamily />} />
         </Route>
       </Routes>

@@ -1,116 +1,167 @@
-import React, { useState, useEffect, useRef } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import SearchableDropdown from "./SearchableDropdown";
+import axios from "axios";
 
-const SearchableDropdown = ({ onSelect, selectedValue, label, debounceTime = 300 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+const AddRelations = () => {
+  const [formData, setFormData] = useState({
+    from: null,
+    to: null,
+    type: "parent",
+    notes: "",
+    details: "",
+  });
 
-  const containerRef = useRef();
-  const debounceRef = useRef(null);
+  const [tooltip, setTooltip] = useState("");
 
-  // Close dropdown when clicking outside
+  // Update tooltip text dynamically
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Fetch members from API with debounce
-  useEffect(() => {
-    if (!searchTerm) {
-      setResults([]);
-      return;
+    if (!formData.from || !formData.to) {
+      setTooltip("Select both members to save.");
+    } else {
+      setTooltip(
+        `Connects '${formData.from.firstName} ${formData.from.lastName}' as ${formData.type} of '${formData.to.firstName} ${formData.to.lastName}'`
+      );
     }
+  }, [formData]);
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Submitting:", formData);
 
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:3002/api/members/search?q=${encodeURIComponent(searchTerm)}`);
-        const data = await res.json();
-        setResults(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }, debounceTime);
-
-    return () => clearTimeout(debounceRef.current);
-  }, [searchTerm, debounceTime]);
-
-  const handleSelect = (user) => {
-    onSelect(user);
-    setSearchTerm('');
-    setIsOpen(false);
+    axios
+      .post(
+        process.env.REACT_APP_API_URL + "/api/relationships/add",
+        {
+          from: formData.from?._id,
+          to: formData.to?._id,
+          type: formData.type,
+          notes: formData.notes,
+          details: formData.details,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+      .then((res) => {
+        console.log(res.data);
+        alert("Relationship saved successfully!");
+        setFormData({ from: null, to: null, type: "parent", notes: "", details: "" });
+      })
+      .catch((err) => {
+        console.error("Error saving relationship:", err);
+        alert("Failed to save relationship.");
+      });
   };
 
   return (
-    <div ref={containerRef} className="card shadow-sm" style={{ border: "2px solid #0d6efd" }}>
-      <div className="card-body">
-        <h5 className="card-title fw-bold">{label}</h5>
-        <div className="position-relative">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search for member..."
-            value={searchTerm || (selectedValue ? `${selectedValue.firstName} ${selectedValue.lastName}` : '')}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setIsOpen(true)}
-          />
+    <div className="container mt-4">
+      <div className="text-center mb-3">
+        <h1 className="display-4 p-3 d-inline-block">Add Relation</h1>
+      </div>
 
-          {isOpen && (
-            <ul className="dropdown-menu show w-100 mt-1 shadow">
-              {loading ? (
-                <li><span className="dropdown-item-text">Loading...</span></li>
-              ) : results.length > 0 ? (
-                results.map(user => (
-                  <li key={user._id}>
-                    <button
-                      className="dropdown-item d-flex align-items-center"
-                      onClick={() => handleSelect(user)}
-                    >
-                      <img
-                        src={user.avatar || `https://i.pravatar.cc/150?u=${user._id}`}
-                        alt={user.firstName}
-                        className="rounded-circle me-2"
-                        width="30"
-                        height="30"
-                      />
-                      <div>
-                        <div>{user.firstName} {user.lastName}</div>
-                        <small className="text-muted">DOB: {user.dob}</small>
-                      </div>
-                    </button>
-                  </li>
-                ))
-              ) : (
-                <li><span className="dropdown-item-text">No members found</span></li>
-              )}
-            </ul>
-          )}
+      <form onSubmit={handleSubmit}>
+        {/* Relation Type Selector */}
+        <div className="row justify-content-center align-items-center mb-4">
+          <div className="col-auto">
+            <label htmlFor="type" className="col-form-label fs-4 fw-bold">
+              Relation Type:
+            </label>
+          </div>
+          <div className="col-auto">
+            <select
+              id="type"
+              className="form-select form-select-lg"
+              style={{ border: "2px solid grey" }}
+              value={formData.type}
+              onChange={(e) =>
+                setFormData({ ...formData, type: e.target.value })
+              }
+            >
+              <option value="parent">Parent</option>
+              <option value="spouse">Spouse</option>
+              <option value="friend">Friend</option>
+            </select>
+          </div>
         </div>
 
-        {selectedValue && (
-          <div className="mt-3 text-muted d-flex align-items-center gap-1">
-            <img
-              src={selectedValue.avatar || `https://i.pravatar.cc/150?u=${selectedValue._id}`}
-              alt=""
-              style={{ height: "20px", width: "20px", borderRadius: "100%" }}
+        {/* From / To Selection */}
+        <div className="row align-items-center justify-content-center mb-3">
+          <div className="col-md-5">
+            <SearchableDropdown
+              onSelect={(user) => setFormData({ ...formData, from: user })}
+              selectedValue={formData.from}
+              label="From:"
             />
-            <small>Selected: {selectedValue.firstName} {selectedValue.lastName}</small>
           </div>
-        )}
-      </div>
+
+          <div className="col-md-1 text-center">
+            {formData.type === "parent" ? (
+              <span style={{ fontSize: "3rem", color: "grey" }}>
+                &#8594;
+              </span>
+            ) : (
+              <span style={{ fontSize: "3rem", color: "grey" }}>
+                &#8596;
+              </span>
+            )}
+          </div>
+
+          <div className="col-md-5">
+            <SearchableDropdown
+              onSelect={(user) => setFormData({ ...formData, to: user })}
+              selectedValue={formData.to}
+              label="To:"
+            />
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="row justify-content-center mb-3">
+          <div className="col-md-10">
+            <label className="form-label fw-bold">Details:</label>
+            <textarea
+              className="form-control"
+              rows="2"
+              placeholder="Enter details about this relationship..."
+              value={formData.details}
+              onChange={(e) =>
+                setFormData({ ...formData, details: e.target.value })
+              }
+            />
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="row justify-content-center mb-3">
+          <div className="col-md-10">
+            <label className="form-label fw-bold">Notes:</label>
+            <textarea
+              className="form-control"
+              rows="2"
+              placeholder="Enter notes..."
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+            />
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="text-center mt-4">
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            disabled={!formData.from || !formData.to}
+            title={tooltip}
+          >
+            Save Relation
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
 
-export default SearchableDropdown;
+export default AddRelations;
